@@ -10,43 +10,37 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewDebug;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 
 /**
  * Created by aberigle on 06/04/15.
  */
-public class SlidingTabLayout extends HorizontalScrollView{
+public class SlidingTabLayout extends HorizontalScrollView {
 
     private static final float TAB_VIEW_PADDING_DIPS = 16;
 
     private final SlidingTabStrip strip;
 
-    private int displayWidth;
-    private int displayHeight;
-
-    private int selectedOffset;
-
-    private       int backgroundColor;
     private final int selectedTextColor;
-    private       int textColor;
+    private final int textColor;
 
-    private ViewPager viewpager;
+    private ViewPager           viewpager;
+    private PagerChangeListener pagerListener;
 
 
     public SlidingTabLayout(Context context) { this(context, null); }
 
-    public SlidingTabLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    public SlidingTabLayout(Context context, AttributeSet attributes) {
+        super(context, attributes);
         setHorizontalScrollBarEnabled(false);
         setFillViewport(true);
 
-        backgroundColor = getBackgroundColor();
-        textColor = getContext().getResources().getColor(android.R.color.secondary_text_dark);
-        selectedTextColor = getContext().getResources().getColor(android.R.color.primary_text_dark);
-        setBackgroundColor(backgroundColor);
+        selectedTextColor = context.getResources().getColor(R.color.white);
+        textColor = context.getResources().getColor(R.color.bright_foreground_dark_disabled);
 
-        strip = new SlidingTabStrip(getContext(), Color.WHITE);
+        strip = new SlidingTabStrip(context, Color.WHITE);
 
         addView(strip);
 
@@ -54,11 +48,11 @@ public class SlidingTabLayout extends HorizontalScrollView{
 
     private void populateFromPager() {
         PagerAdapter adapter = viewpager.getAdapter();
-        int padding = (int) (TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
+        int          padding = (int) (TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
 
         TextView tab;
 
-        for (int i = 0; i < adapter.getCount(); i++) {
+        if (adapter != null) for (int i = 0; i < adapter.getCount(); i++) {
             tab = new TextView(getContext());
             final int index = i;
             tab.setGravity(Gravity.CENTER);
@@ -82,17 +76,12 @@ public class SlidingTabLayout extends HorizontalScrollView{
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
-        if (viewpager != null)
+        if (viewpager != null) {
+            pagerListener.onPageSelected(viewpager.getCurrentItem());
             scrollToTab(viewpager.getCurrentItem(), 0);
+        }
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        displayWidth = MeasureSpec.getSize(widthMeasureSpec);
-        displayHeight = MeasureSpec.getSize(heightMeasureSpec);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
 
     private int resolveAttr(int attrId) {
         TypedValue outValue = new TypedValue();
@@ -100,15 +89,9 @@ public class SlidingTabLayout extends HorizontalScrollView{
         return outValue.data;
     }
 
-    private int getTextColor() {
-        return resolveAttr(android.R.attr.textColorPrimaryInverse);
-    }
-
     private void scrollToTab(int index, float positionOffset) {
         final int childCount = strip.getChildCount();
-        if (childCount == 0 || index < 0 || index >= childCount) {
-            return;
-        }
+        if (childCount == 0 || index < 0 || index >= childCount) return;
 
         View selectedChild = strip.getChildAt(index);
         if (selectedChild != null) {
@@ -124,21 +107,11 @@ public class SlidingTabLayout extends HorizontalScrollView{
         }
     }
 
-    private int getBackgroundColor() {
-        int attrId;
-        if (Build.VERSION.SDK_INT >= 21)
-            attrId = android.R.attr.colorPrimary;
-        else
-            attrId = android.R.attr.colorBackground;
-        return resolveAttr(attrId);
-    }
-
     public void setViewpager(ViewPager pager) {
         viewpager = pager;
 
-        if (pager != null) {
-            pager.setOnPageChangeListener(new PagerChangeListener());
-        }
+        if (pager != null) pager.setOnPageChangeListener(pagerListener = new PagerChangeListener());
+
         populateFromPager();
     }
 
@@ -158,7 +131,6 @@ public class SlidingTabLayout extends HorizontalScrollView{
             if (oldPos != null) if (!oldPos.equals(selected)) oldPos.setTextColor(textColor);
             oldPos = selected;
             selected.setTextColor(selectedTextColor);
-//            scrollToTab(position, 0);
         }
 
         @Override
