@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -25,9 +27,9 @@ public class SlidingTabLayout extends HorizontalScrollView{
 
     private int selectedOffset;
 
-    private int backgroundColor;
+    private       int backgroundColor;
     private final int selectedTextColor;
-    private int textColor;
+    private       int textColor;
 
     private ViewPager viewpager;
 
