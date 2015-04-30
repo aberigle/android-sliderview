@@ -3,10 +3,12 @@ package com.aberigle.android.sliderview;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -26,9 +28,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
     private final int selectedTextColor;
     private final int textColor;
 
-    private ViewPager           viewpager;
-    private PagerChangeListener pagerListener;
+    private ViewPager                      viewpager;
+    private PagerChangeListener            pagerListener;
     private ViewPager.OnPageChangeListener onPageChangeListener;
+    private ActionBar                      bar;
+    private ColorDrawable                  barBackground;
 
 
     public SlidingTabLayout(Context context) { this(context, null); }
@@ -89,11 +93,10 @@ public class SlidingTabLayout extends HorizontalScrollView {
         }
     }
 
-
-    private int resolveAttr(int attrId) {
-        TypedValue outValue = new TypedValue();
-        getContext().getTheme().resolveAttribute(attrId, outValue, true);
-        return outValue.data;
+    @Override
+    public void setBackgroundColor(int color) {
+        super.setBackgroundColor(color);
+        if (bar != null) ((ColorDrawable) barBackground.mutate()).setColor(color);
     }
 
     private void scrollToTab(int index, float positionOffset) {
@@ -124,6 +127,13 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     public void setOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
         this.onPageChangeListener = onPageChangeListener;
+    }
+
+    public void attachToActionBar(ActionBar bar) {
+        this.bar = bar;
+        bar.setElevation(0);        ;
+        barBackground = new ColorDrawable(((ColorDrawable) getBackground()).getColor());
+        bar.setBackgroundDrawable(barBackground);
     }
 
     private class PagerChangeListener implements ViewPager.OnPageChangeListener {
