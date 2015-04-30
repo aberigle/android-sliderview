@@ -5,12 +5,12 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewDebug;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 
@@ -28,6 +28,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     private ViewPager           viewpager;
     private PagerChangeListener pagerListener;
+    private ViewPager.OnPageChangeListener onPageChangeListener;
 
 
     public SlidingTabLayout(Context context) { this(context, null); }
@@ -44,6 +45,12 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
         addView(strip);
 
+    }
+
+    @Override
+    public void setElevation(float elevation) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) super.setElevation(elevation);
+        else ViewCompat.setElevation(this, elevation);
     }
 
     private void populateFromPager() {
@@ -115,6 +122,10 @@ public class SlidingTabLayout extends HorizontalScrollView {
         populateFromPager();
     }
 
+    public void setOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
+        this.onPageChangeListener = onPageChangeListener;
+    }
+
     private class PagerChangeListener implements ViewPager.OnPageChangeListener {
 
         private TextView oldPos;
@@ -123,6 +134,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
             strip.onViewPagerChanged(position, positionOffset);
             scrollToTab(position, positionOffset);
+            onPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
         }
 
         @Override
@@ -131,11 +143,12 @@ public class SlidingTabLayout extends HorizontalScrollView {
             if (oldPos != null) if (!oldPos.equals(selected)) oldPos.setTextColor(textColor);
             oldPos = selected;
             selected.setTextColor(selectedTextColor);
+            onPageChangeListener.onPageSelected(position);
         }
 
         @Override
         public void onPageScrollStateChanged(int state) {
-
+            onPageChangeListener.onPageScrollStateChanged(state);
         }
     }
 
