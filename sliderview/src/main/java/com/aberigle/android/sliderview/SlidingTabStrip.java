@@ -14,8 +14,8 @@ public class SlidingTabStrip extends LinearLayout {
     private static final float SELECTED_INDICATOR_THICKNESS_DIPS = 1;
 
     private final Paint paint;
-    private final int borderThickness;
 
+    private int borderThickness;
     private int currentPosition;
     private float positionOffset;
 
@@ -27,16 +27,20 @@ public class SlidingTabStrip extends LinearLayout {
         paint = new Paint();
         paint.setColor(borderColor);
 
-        float density = getResources().getDisplayMetrics().density;
-        borderThickness = (int) (SELECTED_INDICATOR_THICKNESS_DIPS * density);
+        setBorderThicknessDPS(SELECTED_INDICATOR_THICKNESS_DIPS);
 
         setOrientation(HORIZONTAL);
     }
 
-    public void onViewPagerChanged(int position, float offset) {
+    protected void onViewPagerChanged(int position, float offset) {
         currentPosition = position;
         positionOffset = offset;
         invalidate();
+    }
+
+    protected void setBorderThicknessDPS( float dps) {
+        float density = getResources().getDisplayMetrics().density;
+        borderThickness = (int) (dps * density);
     }
 
     @Override

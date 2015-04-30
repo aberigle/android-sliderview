@@ -46,9 +46,12 @@ public class SlidingTabLayout extends HorizontalScrollView {
         textColor = context.getResources().getColor(R.color.bright_foreground_dark_disabled);
 
         strip = new SlidingTabStrip(context, Color.WHITE);
-
         addView(strip);
 
+    }
+
+    public void setBorderIndicatorThicknessDPS(int dps) {
+        strip.setBorderThicknessDPS(dps);
     }
 
     @Override
