@@ -10,6 +10,7 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -121,11 +122,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
     }
 
     public void setViewpager(ViewPager pager) {
-        viewpager = pager;
-
-        if (pager != null) pager.setOnPageChangeListener(pagerListener = new PagerChangeListener());
-
-        populateFromPager();
+        if (pager != null) {
+            viewpager = pager;
+            pager.setOnPageChangeListener(pagerListener = new PagerChangeListener());
+            populateFromPager();
+        }
     }
 
     public void setOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
@@ -134,7 +135,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     public void attachToActionBar(ActionBar bar) {
         this.bar = bar;
-        bar.setElevation(0);        ;
+        bar.setElevation(0);
         barBackground = new ColorDrawable(((ColorDrawable) getBackground()).getColor());
         bar.setBackgroundDrawable(barBackground);
     }

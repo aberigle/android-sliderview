@@ -1,46 +1,72 @@
 package com.aberigle.android.sliderview.example;
 
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.view.PagerAdapter;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.WindowCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.aberigle.android.sliderview.SlidingTabLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 
-public class ExampleActivity extends ActionBarActivity {
+public class ExampleActivity extends AppCompatActivity {
 
-    private ViewPager viewPager;
-    private SimplePagerAdapter pagerAdapter;
-    private ActionBar bar;
-
+    private ActionBar          bar;
+    private SlidingTabLayout   slidingHeader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_example);
 
         bar = getSupportActionBar();
 
-        bar.setElevation(0);
-
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
-        pagerAdapter = new SimplePagerAdapter();
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        SimplePagerAdapter pagerAdapter = new SimplePagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
 
-        SlidingTabLayout slidingTab = (SlidingTabLayout) findViewById(R.id.slidingtab);
-        slidingTab.setViewpager(viewPager);
-        slidingTab.setElevation(8);
+        slidingHeader = (SlidingTabLayout) findViewById(R.id.slidingtab);
+        slidingHeader.setViewpager(viewPager);
+        slidingHeader.setElevation(16);
+        slidingHeader.attachToActionBar(bar);
+
+        slidingHeader.setOnPageChangeListener(new ViewPager.OnPageChangeListener(){
+            public int getRandom(int min, int max) {
+                return new Random().nextInt(max - min) + min;
+            }
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+
+            @Override
+            public void onPageSelected(int position) {
+                int color = Color.rgb(
+                        getRandom(100, 200),
+                        getRandom(100, 200),
+                        getRandom(100, 200)
+                );
+                slidingHeader.setBackgroundColor(color);
+                slidingHeader.setBorderIndicatorThicknessDPS(
+                        getRandom(position + 1, (position + 1) * 3)
+                );
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+
+        });
     }
 
     @Override
@@ -59,39 +85,35 @@ public class ExampleActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            bar.hide();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public class SimplePagerAdapter extends PagerAdapter {
+    public SlidingTabLayout getSlidingHeader() {
+        return slidingHeader;
+    }
+
+    public class SimplePagerAdapter extends FragmentPagerAdapter {
 
         public List<String> pages;
 
-        public SimplePagerAdapter() {
+        public SimplePagerAdapter(FragmentManager fm) {
+            super(fm);
             pages = new ArrayList<>();
-            Collections.addAll(pages, "1 2 3 4 5 6 7 8 9 10 11".split(" "));
+            Collections.addAll(pages, "playground list scrollview one two three four five".split(" "));
         }
 
         @Override
-        public Object instantiateItem(ViewGroup container, int position) {
-            View view = getLayoutInflater().inflate(R.layout.example_page, container, false);
-            container.addView(view);
-            TextView text = (TextView) view.findViewById(R.id.text);
-            text.setText("page: " + pages.get(position));
-            return view;
-        }
+        public Fragment getItem(int position) {
+            return ContentFragment.newInstance(position);
 
-        @Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
-            container.removeView((View) object);
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return "PAGE " + pages.get(position);
+            return pages.get(position);
         }
 
         @Override
@@ -99,9 +121,5 @@ public class ExampleActivity extends ActionBarActivity {
             return pages.size();
         }
 
-        @Override
-        public boolean isViewFromObject(View view, Object object) {
-            return object == view;
-        }
     }
 }
