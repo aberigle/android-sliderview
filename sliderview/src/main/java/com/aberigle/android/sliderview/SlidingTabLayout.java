@@ -147,7 +147,8 @@ public class SlidingTabLayout extends HorizontalScrollView {
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
             strip.onViewPagerChanged(position, positionOffset);
             scrollToTab(position, positionOffset);
-            onPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
+            if (onPageChangeListener != null)
+                onPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
         }
 
         @Override
@@ -156,12 +157,12 @@ public class SlidingTabLayout extends HorizontalScrollView {
             if (oldPos != null) if (!oldPos.equals(selected)) oldPos.setTextColor(textColor);
             oldPos = selected;
             selected.setTextColor(selectedTextColor);
-            onPageChangeListener.onPageSelected(position);
+            if (onPageChangeListener != null) onPageChangeListener.onPageSelected(position);
         }
 
         @Override
         public void onPageScrollStateChanged(int state) {
-            onPageChangeListener.onPageScrollStateChanged(state);
+            if (onPageChangeListener != null) onPageChangeListener.onPageScrollStateChanged(state);
         }
     }
 
