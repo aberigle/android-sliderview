@@ -174,6 +174,10 @@ public class SlidingTabLayout extends HorizontalScrollView {
         }
     }
 
+    public void setDefaultTabView() {
+        setCustomTabView(0, 0);
+    }
+
     private class PagerChangeListener implements ViewPager.OnPageChangeListener {
 
         private TextView oldPos;

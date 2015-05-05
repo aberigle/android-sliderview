@@ -17,25 +17,29 @@ public class ContentFragment extends Fragment {
     private static final String LAYOUT = "layout";
     private int              position;
     private SlidingTabLayout header;
+    private OnPlayGroundItemClickListener playGroundListener;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        header = ((ExampleActivity) getActivity()).getSlidingHeader();
+        playGroundListener  = (ExampleActivity) getActivity();
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         position = getArguments().getInt(LAYOUT);
+        View view;
         if (position == 0)
-            return setUpPlayGround(inflater.inflate(R.layout.playground, container, false));
-        if (position == 1)
-            return setUpList(inflater.inflate(R.layout.list, container, false));
-        if (position == 2)
-            return setUpScrollView(inflater.inflate(R.layout.scrollview, container, false));
+            view = setUpPlayGround(inflater.inflate(R.layout.playground, container, false));
+        else if (position == 1)
+            view = setUpList(inflater.inflate(R.layout.list, container, false));
+        else if (position == 2)
+            view = setUpScrollView(inflater.inflate(R.layout.scrollview, container, false));
+        else
+            view = inflater.inflate(R.layout.example_page, container, false);
 
-        return inflater.inflate(R.layout.example_page, container, false);
+        return view;
     }
 
     private View setUpScrollView(View view) {
@@ -55,8 +59,16 @@ public class ContentFragment extends Fragment {
         return listView;
     }
 
-    public View setUpPlayGround(View view) {
-        return view;
+    public View setUpPlayGround(final View playground) {
+        View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                playGroundListener.onPlayGroundItemClick(playground, view);
+            }
+        };
+        playground.findViewById(R.id.customTabView).setOnClickListener(listener);
+        playground.findViewById(R.id.defaultTabView).setOnClickListener(listener);
+        return playground;
     }
 
     public static Fragment newInstance(int position) {
@@ -65,6 +77,10 @@ public class ContentFragment extends Fragment {
         bundle.putInt(LAYOUT, position);
         fragment.setArguments(bundle);
         return fragment;
+    }
+
+    public interface OnPlayGroundItemClickListener {
+        void onPlayGroundItemClick(View playground, View clickedView);
     }
 
 }
