@@ -10,9 +10,9 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
@@ -22,7 +22,7 @@ import android.widget.TextView;
  */
 public class SlidingTabLayout extends HorizontalScrollView {
 
-    private static final float TAB_VIEW_PADDING_DIPS = 16;
+    private static final float DEFAULT_TAB_VIEW_PADDING_DIPS = 16;
 
     private final SlidingTabStrip strip;
 
@@ -35,6 +35,8 @@ public class SlidingTabLayout extends HorizontalScrollView {
     private ActionBar                      bar;
     private ColorDrawable                  barBackground;
 
+    private int customTabViewId;
+    private int customTabViewTextViewId;
 
     public SlidingTabLayout(Context context) { this(context, null); }
 
@@ -51,6 +53,10 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     }
 
+    public void refreshViews() {
+        populateFromPager();
+    }
+
     public void setBorderIndicatorThicknessDPS(int dps) {
         strip.setBorderThicknessDPS(dps);
     }
@@ -63,29 +69,55 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     private void populateFromPager() {
         PagerAdapter adapter = viewpager.getAdapter();
-        int          padding = (int) (TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
-
-        TextView tab;
-
+        View tab;
+        strip.removeAllViews();
         if (adapter != null) for (int i = 0; i < adapter.getCount(); i++) {
-            tab = new TextView(getContext());
             final int index = i;
-            tab.setGravity(Gravity.CENTER);
-            tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-            tab.setTypeface(Typeface.DEFAULT_BOLD);
-            tab.setTextColor(textColor);
-            tab.setAllCaps(true);
-            tab.setText(adapter.getPageTitle(i));
+            tab = getTabView(adapter.getPageTitle(i));
             tab.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     viewpager.setCurrentItem(index);
                 }
             });
-            tab.setPadding(padding,padding,padding,padding);
             strip.addView(tab);
         }
 
+    }
+
+    public View getTitleView(int position) {
+        return strip.getChildAt(position);
+    }
+    
+    public void setCustomTabView(int tabViewId, int textViewId) {
+        this.customTabViewId = tabViewId;
+        this.customTabViewTextViewId = textViewId;
+    }
+
+    private View getTabView(CharSequence title) {
+        if (customTabViewId == 0) return getDefaultTabView(title);
+        else return getCustomTabView(title);
+    }
+
+    private View getCustomTabView(CharSequence title) {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View tabView = inflater.inflate(customTabViewId, strip, false);
+        TextView text = (TextView) tabView.findViewById(customTabViewTextViewId);
+        if (text != null) text.setText(title);
+        return tabView;
+    }
+
+    private View getDefaultTabView(CharSequence title) {
+        int padding = (int) (DEFAULT_TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
+        TextView tab = new TextView(getContext());
+        tab.setGravity(Gravity.CENTER);
+        tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        tab.setTypeface(Typeface.DEFAULT_BOLD);
+        tab.setTextColor(textColor);
+        tab.setAllCaps(true);
+        tab.setText(title);
+        tab.setPadding(padding, padding, padding, padding);
+        return tab;
     }
 
     @Override
@@ -135,9 +167,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     public void attachToActionBar(ActionBar bar) {
         this.bar = bar;
-        bar.setElevation(0);
-        barBackground = new ColorDrawable(((ColorDrawable) getBackground()).getColor());
-        bar.setBackgroundDrawable(barBackground);
+        if (bar != null) {
+            bar.setElevation(0);
+            barBackground = new ColorDrawable(((ColorDrawable) getBackground()).getColor());
+            bar.setBackgroundDrawable(barBackground);
+        }
     }
 
     private class PagerChangeListener implements ViewPager.OnPageChangeListener {
@@ -154,7 +188,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
         @Override
         public void onPageSelected(int position) {
-            TextView selected = (TextView) strip.getChildAt(position);
+            TextView selected;
+            View view = strip.getChildAt(position);
+            if (customTabViewId == 0)
+                selected = (TextView) view;
+            else selected = (TextView) view.findViewById(customTabViewTextViewId);
             if (oldPos != null) if (!oldPos.equals(selected)) oldPos.setTextColor(textColor);
             oldPos = selected;
             selected.setTextColor(selectedTextColor);
