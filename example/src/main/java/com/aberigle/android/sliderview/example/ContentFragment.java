@@ -6,17 +6,19 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.aberigle.android.sliderview.SlidingTabLayout;
+
+import java.util.ArrayList;
 
 public class ContentFragment extends Fragment {
 
     private static final String LAYOUT = "layout";
     private int              position;
-    private SlidingTabLayout header;
     private OnPlayGroundItemClickListener playGroundListener;
 
     @Override
@@ -34,18 +36,16 @@ public class ContentFragment extends Fragment {
             view = setUpPlayGround(inflater.inflate(R.layout.playground, container, false));
         else if (position == 1)
             view = setUpList(inflater.inflate(R.layout.list, container, false));
-        else if (position == 2)
-            view = setUpScrollView(inflater.inflate(R.layout.scrollview, container, false));
         else
-            view = inflater.inflate(R.layout.example_page, container, false);
+            view = setUpExamplePage(inflater.inflate(R.layout.example_page, container, false), position - 1);
 
         return view;
     }
 
-    private View setUpScrollView(View view) {
+    public View setUpExamplePage(View view, int title) {
+        ((TextView) view.findViewById(R.id.text)).setText(String.valueOf(title));
         return view;
     }
-
     private View setUpList(View view) {
         ListView listView = (ListView) view;
         ArrayAdapter<String> adapter =
@@ -62,20 +62,46 @@ public class ContentFragment extends Fragment {
     }
 
     public View setUpPlayGround(final View playground) {
-        View.OnClickListener listener = new View.OnClickListener() {
+        View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                playGroundListener.onPlayGroundItemClick(playground, view);
+                playGroundListener.onPlayGroundItemInteract(playground, view);
+            }
+        };
+
+        SeekBar.OnSeekBarChangeListener seekBarListener = new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                playGroundListener.onPlayGroundItemInteract(playground, seekBar);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         };
 
         int[] ids = {
+                R.id.randomColor,
                 R.id.hideBarOnScroll,
                 R.id.customTabView,
                 R.id.defaultTabView
         };
 
-        for (int id : ids) playground.findViewById(id).setOnClickListener(listener);
+        for (int id : ids) playground.findViewById(id).setOnClickListener(clickListener);
+
+        int[] colorIds = {
+                R.id.redBar,
+                R.id.blueBar,
+                R.id.greenBar
+        };
+        for (int id : colorIds)
+            ((SeekBar) playground.findViewById(id)).setOnSeekBarChangeListener(seekBarListener);
 
         return playground;
     }
@@ -89,7 +115,7 @@ public class ContentFragment extends Fragment {
     }
 
     public interface OnPlayGroundItemClickListener {
-        void onPlayGroundItemClick(View playground, View clickedView);
+        void onPlayGroundItemInteract(View playground, View clickedView);
     }
 
 }

@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.CheckBox;
+import android.widget.SeekBar;
 
 import com.aberigle.android.sliderview.SlidingTabLayout;
 
@@ -48,25 +49,13 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
         hideBarOnScroll = false;
 
         slidingHeader.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            public int getRandom(int min, int max) {
-                return new Random().nextInt(max - min) + min;
-            }
-
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
             }
 
             @Override
             public void onPageSelected(int position) {
-                int color = Color.rgb(
-                        getRandom(100, 200),
-                        getRandom(100, 200),
-                        getRandom(100, 200)
-                );
-                slidingHeader.setBackgroundColor(color);
-                slidingHeader.setBorderIndicatorThicknessDPS(
-                        getRandom(position + 1, (position + 1) * 3)
-                );
+
             }
 
             @Override
@@ -103,7 +92,10 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
     }
 
     @Override
-    public void onPlayGroundItemClick(View playground, View clickedView) {
+    public void onPlayGroundItemInteract(View playground, View clickedView) {
+        int red     = -1,
+            green   = -1,
+            blue    = -1;
         switch (clickedView.getId()) {
             case R.id.customTabView:
                 setCustomTabView();
@@ -115,7 +107,39 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
                 CheckBox checkBox = (CheckBox) clickedView;
                 hideBarOnScroll = checkBox.isChecked();
                 break;
+            case R.id.randomColor:
+                Random random = new Random();
+                red     = random.nextInt(200 - 100) + 100;
+                green   = random.nextInt(200 - 100) + 100;
+                blue    = random.nextInt(200 - 100) + 100;
+            case R.id.redBar:
+            case R.id.greenBar:
+            case R.id.blueBar:
+                SeekBar redbar      = (SeekBar) playground.findViewById(R.id.redBar);
+                SeekBar greenbar    = (SeekBar) playground.findViewById(R.id.greenBar);
+                SeekBar bluebar     = (SeekBar) playground.findViewById(R.id.blueBar);
+
+                if (red   == -1) red    = redbar.getProgress();
+                if (green == -1) green  = greenbar.getProgress();
+                if (blue  == -1) blue   = bluebar.getProgress();
+
+                redbar.setProgress(red);
+                greenbar.setProgress(green);
+                bluebar.setProgress(blue);
+                updateHeaderColor(
+                        red,
+                        green,
+                        blue);
+                break;
         }
+    }
+
+    private void updateHeaderColor(int red, int green, int blue) {
+        int color = Color.rgb(red, green, blue);
+        slidingHeader.setBackgroundColor(color);
+//        slidingHeader.setBorderIndicatorThicknessDPS(
+//                getRandom(position + 1, (position + 1) * 3)
+//        );
     }
 
     private void setDefaultTabView() {
@@ -159,7 +183,7 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
         public SimplePagerAdapter(FragmentManager fm) {
             super(fm);
             pages = new ArrayList<>();
-            Collections.addAll(pages, "playground list scrollview one two three four five".split(" "));
+            Collections.addAll(pages, "playground list one two three four five six".split(" "));
         }
 
         @Override
