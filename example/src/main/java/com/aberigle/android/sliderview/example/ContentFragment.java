@@ -51,6 +51,8 @@ public class ContentFragment extends Fragment {
         ArrayAdapter<String> adapter =
                 new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1);
 
+        listView.setOnScrollListener((ExampleActivity) getActivity());
+
         adapter.addAll(
                 "one two three four five six seven eight nine one two three four five six seven eight nine one two three four five six seven eight nine".split(" ")
         );
@@ -66,8 +68,15 @@ public class ContentFragment extends Fragment {
                 playGroundListener.onPlayGroundItemClick(playground, view);
             }
         };
-        playground.findViewById(R.id.customTabView).setOnClickListener(listener);
-        playground.findViewById(R.id.defaultTabView).setOnClickListener(listener);
+
+        int[] ids = {
+                R.id.hideBarOnScroll,
+                R.id.customTabView,
+                R.id.defaultTabView
+        };
+
+        for (int id : ids) playground.findViewById(id).setOnClickListener(listener);
+
         return playground;
     }
 

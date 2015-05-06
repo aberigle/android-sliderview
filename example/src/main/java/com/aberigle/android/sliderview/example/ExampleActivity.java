@@ -11,6 +11,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
+import android.widget.CheckBox;
 
 import com.aberigle.android.sliderview.SlidingTabLayout;
 
@@ -19,10 +21,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class ExampleActivity extends AppCompatActivity implements ContentFragment.OnPlayGroundItemClickListener {
+public class ExampleActivity extends AppCompatActivity implements ContentFragment.OnPlayGroundItemClickListener, AbsListView.OnScrollListener {
 
-    private ActionBar          bar;
-    private SlidingTabLayout   slidingHeader;
+    private ActionBar        bar;
+    private SlidingTabLayout slidingHeader;
+    private boolean          hideBarOnScroll;
+    private int              lastScrollY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +36,7 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
 
         bar = getSupportActionBar();
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        ViewPager          viewPager    = (ViewPager) findViewById(R.id.viewpager);
         SimplePagerAdapter pagerAdapter = new SimplePagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
 
@@ -40,6 +44,8 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
         slidingHeader.setViewpager(viewPager);
         slidingHeader.setElevation(16);
         slidingHeader.attachToActionBar(bar);
+
+        hideBarOnScroll = false;
 
         slidingHeader.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             public int getRandom(int min, int max) {
@@ -105,6 +111,10 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
             case R.id.defaultTabView:
                 setDefaultTabView();
                 break;
+            case R.id.hideBarOnScroll:
+                CheckBox checkBox = (CheckBox) clickedView;
+                hideBarOnScroll = checkBox.isChecked();
+                break;
         }
     }
 
@@ -116,6 +126,30 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
     private void setCustomTabView() {
         slidingHeader.setCustomTabView(R.layout.custom_tab, R.id.text);
         slidingHeader.refreshViews();
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        if (hideBarOnScroll) {
+            View firstChild = view.getChildAt(0);
+            if (firstChild != null) {
+                int scrollY = -firstChild.getTop() + firstVisibleItem * firstChild.getHeight();
+
+                int diff = Math.abs(lastScrollY - scrollY);
+
+                if (diff > bar.getHeight() / 2) {
+                    if (scrollY > lastScrollY && bar.isShowing()) bar.hide();
+                    else if (scrollY < lastScrollY && !bar.isShowing()) bar.show();
+                    lastScrollY = scrollY;
+                }
+
+            }
+        }
     }
 
     public class SimplePagerAdapter extends FragmentPagerAdapter {
