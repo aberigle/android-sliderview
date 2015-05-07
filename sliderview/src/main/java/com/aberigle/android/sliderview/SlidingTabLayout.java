@@ -27,9 +27,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
     private final SlidingTabStrip strip;
 
     private final int selectedTextColor;
-    private final int textColor;
+    private final int defaultTextColor;
+    private       int textColor;
 
     private ViewPager                      viewpager;
+
     private PagerChangeListener            pagerListener;
     private ViewPager.OnPageChangeListener onPageChangeListener;
     private ActionBar                      bar;
@@ -45,8 +47,9 @@ public class SlidingTabLayout extends HorizontalScrollView {
         setHorizontalScrollBarEnabled(false);
         setFillViewport(true);
 
+        textColor = -1;
         selectedTextColor = context.getResources().getColor(R.color.white);
-        textColor = context.getResources().getColor(R.color.bright_foreground_dark_disabled);
+        defaultTextColor  = context.getResources().getColor(R.color.bright_foreground_dark_disabled);
 
         strip = new SlidingTabStrip(context, Color.WHITE);
         addView(strip);
@@ -93,6 +96,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
     public void setCustomTabView(int tabViewId, int textViewId) {
         this.customTabViewId = tabViewId;
         this.customTabViewTextViewId = textViewId;
+        textColor = -1;
     }
 
     private View getTabView(CharSequence title) {
@@ -104,12 +108,18 @@ public class SlidingTabLayout extends HorizontalScrollView {
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View tabView = inflater.inflate(customTabViewId, strip, false);
         TextView text = (TextView) tabView.findViewById(customTabViewTextViewId);
-        if (text != null) text.setText(title);
+        if (text != null) {
+            text.setText(title);
+            if (textColor == -1) textColor = text.getCurrentTextColor();
+        }
+
         return tabView;
     }
 
     private View getDefaultTabView(CharSequence title) {
         int padding = (int) (DEFAULT_TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
+        if (textColor == -1) textColor = defaultTextColor;
+
         TextView tab = new TextView(getContext());
         tab.setGravity(Gravity.CENTER);
         tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
