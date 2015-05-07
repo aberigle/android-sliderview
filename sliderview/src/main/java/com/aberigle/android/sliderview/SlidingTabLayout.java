@@ -3,10 +3,16 @@ package com.aberigle.android.sliderview;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
@@ -14,99 +20,135 @@ import android.widget.TextView;
 /**
  * Created by aberigle on 06/04/15.
  */
-public class SlidingTabLayout extends HorizontalScrollView{
+public class SlidingTabLayout extends HorizontalScrollView {
 
-    private static final float TAB_VIEW_PADDING_DIPS = 16;
+    private static final float DEFAULT_TAB_VIEW_PADDING_DIPS = 16;
 
     private final SlidingTabStrip strip;
 
-    private int displayWidth;
-    private int displayHeight;
-
-    private int selectedOffset;
-
-    private int backgroundColor;
     private final int selectedTextColor;
-    private int textColor;
+    private final int defaultTextColor;
+    private       int textColor;
 
-    private ViewPager viewpager;
+    private ViewPager                      viewpager;
 
+    private PagerChangeListener            pagerListener;
+    private ViewPager.OnPageChangeListener onPageChangeListener;
+    private ActionBar                      bar;
+    private ColorDrawable                  barBackground;
+
+    private int customTabViewId;
+    private int customTabViewTextViewId;
 
     public SlidingTabLayout(Context context) { this(context, null); }
 
-    public SlidingTabLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    public SlidingTabLayout(Context context, AttributeSet attributes) {
+        super(context, attributes);
         setHorizontalScrollBarEnabled(false);
         setFillViewport(true);
 
-        backgroundColor = getBackgroundColor();
-        textColor = getContext().getResources().getColor(android.R.color.secondary_text_dark);
-        selectedTextColor = getContext().getResources().getColor(android.R.color.primary_text_dark);
-        setBackgroundColor(backgroundColor);
+        textColor = -1;
+        selectedTextColor = context.getResources().getColor(R.color.white);
+        defaultTextColor  = context.getResources().getColor(R.color.bright_foreground_dark_disabled);
 
-        strip = new SlidingTabStrip(getContext(), Color.WHITE);
-
+        strip = new SlidingTabStrip(context, Color.WHITE);
         addView(strip);
 
     }
 
+    public void refreshViews() {
+        populateFromPager();
+    }
+
+    public void setBorderIndicatorThicknessDPS(int dps) {
+        strip.setBorderThicknessDPS(dps);
+        strip.invalidate();
+    }
+
+    @Override
+    public void setElevation(float elevation) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) super.setElevation(elevation);
+        else ViewCompat.setElevation(this, elevation);
+    }
+
     private void populateFromPager() {
         PagerAdapter adapter = viewpager.getAdapter();
-        int padding = (int) (TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
-
-        TextView tab;
-
-        for (int i = 0; i < adapter.getCount(); i++) {
-            tab = new TextView(getContext());
+        View tab;
+        strip.removeAllViews();
+        if (adapter != null) for (int i = 0; i < adapter.getCount(); i++) {
             final int index = i;
-            tab.setGravity(Gravity.CENTER);
-            tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-            tab.setTypeface(Typeface.DEFAULT_BOLD);
-            tab.setTextColor(textColor);
-            tab.setAllCaps(true);
-            tab.setText(adapter.getPageTitle(i));
+            tab = getTabView(adapter.getPageTitle(i));
             tab.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     viewpager.setCurrentItem(index);
                 }
             });
-            tab.setPadding(padding,padding,padding,padding);
             strip.addView(tab);
         }
 
     }
 
+    public View getTitleView(int position) {
+        return strip.getChildAt(position);
+    }
+    
+    public void setCustomTabView(int tabViewId, int textViewId) {
+        this.customTabViewId = tabViewId;
+        this.customTabViewTextViewId = textViewId;
+        textColor = -1;
+    }
+
+    private View getTabView(CharSequence title) {
+        if (customTabViewId == 0) return getDefaultTabView(title);
+        else return getCustomTabView(title);
+    }
+
+    private View getCustomTabView(CharSequence title) {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View tabView = inflater.inflate(customTabViewId, strip, false);
+        TextView text = (TextView) tabView.findViewById(customTabViewTextViewId);
+        if (text != null) {
+            text.setText(title);
+            if (textColor == -1) textColor = text.getCurrentTextColor();
+        }
+
+        return tabView;
+    }
+
+    private View getDefaultTabView(CharSequence title) {
+        int padding = (int) (DEFAULT_TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
+        if (textColor == -1) textColor = defaultTextColor;
+
+        TextView tab = new TextView(getContext());
+        tab.setGravity(Gravity.CENTER);
+        tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        tab.setTypeface(Typeface.DEFAULT_BOLD);
+        tab.setTextColor(textColor);
+        tab.setAllCaps(true);
+        tab.setText(title);
+        tab.setPadding(padding, padding, padding, padding);
+        return tab;
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
-        if (viewpager != null)
+        if (viewpager != null) {
+            pagerListener.onPageSelected(viewpager.getCurrentItem());
             scrollToTab(viewpager.getCurrentItem(), 0);
+        }
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        displayWidth = MeasureSpec.getSize(widthMeasureSpec);
-        displayHeight = MeasureSpec.getSize(heightMeasureSpec);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
-    private int resolveAttr(int attrId) {
-        TypedValue outValue = new TypedValue();
-        getContext().getTheme().resolveAttribute(attrId, outValue, true);
-        return outValue.data;
-    }
-
-    private int getTextColor() {
-        return resolveAttr(android.R.attr.textColorPrimaryInverse);
+    public void setBackgroundColor(int color) {
+        super.setBackgroundColor(color);
+        if (bar != null) ((ColorDrawable) barBackground.mutate()).setColor(color);
     }
 
     private void scrollToTab(int index, float positionOffset) {
         final int childCount = strip.getChildCount();
-        if (childCount == 0 || index < 0 || index >= childCount) {
-            return;
-        }
+        if (childCount == 0 || index < 0 || index >= childCount) return;
 
         View selectedChild = strip.getChildAt(index);
         if (selectedChild != null) {
@@ -122,22 +164,29 @@ public class SlidingTabLayout extends HorizontalScrollView{
         }
     }
 
-    private int getBackgroundColor() {
-        int attrId;
-        if (Build.VERSION.SDK_INT >= 21)
-            attrId = android.R.attr.colorPrimary;
-        else
-            attrId = android.R.attr.colorBackground;
-        return resolveAttr(attrId);
+    public void setViewpager(ViewPager pager) {
+        if (pager != null) {
+            viewpager = pager;
+            pager.setOnPageChangeListener(pagerListener = new PagerChangeListener());
+            populateFromPager();
+        }
     }
 
-    public void setViewpager(ViewPager pager) {
-        viewpager = pager;
+    public void setOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
+        this.onPageChangeListener = onPageChangeListener;
+    }
 
-        if (pager != null) {
-            pager.setOnPageChangeListener(new PagerChangeListener());
+    public void attachToActionBar(ActionBar bar) {
+        this.bar = bar;
+        if (bar != null) {
+            bar.setElevation(0);
+            barBackground = new ColorDrawable(((ColorDrawable) getBackground()).getColor());
+            bar.setBackgroundDrawable(barBackground);
         }
-        populateFromPager();
+    }
+
+    public void setDefaultTabView() {
+        setCustomTabView(0, 0);
     }
 
     private class PagerChangeListener implements ViewPager.OnPageChangeListener {
@@ -148,20 +197,26 @@ public class SlidingTabLayout extends HorizontalScrollView{
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
             strip.onViewPagerChanged(position, positionOffset);
             scrollToTab(position, positionOffset);
+            if (onPageChangeListener != null)
+                onPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
         }
 
         @Override
         public void onPageSelected(int position) {
-            TextView selected = (TextView) strip.getChildAt(position);
+            TextView selected;
+            View view = strip.getChildAt(position);
+            if (customTabViewId == 0)
+                selected = (TextView) view;
+            else selected = (TextView) view.findViewById(customTabViewTextViewId);
             if (oldPos != null) if (!oldPos.equals(selected)) oldPos.setTextColor(textColor);
             oldPos = selected;
             selected.setTextColor(selectedTextColor);
-//            scrollToTab(position, 0);
+            if (onPageChangeListener != null) onPageChangeListener.onPageSelected(position);
         }
 
         @Override
         public void onPageScrollStateChanged(int state) {
-
+            if (onPageChangeListener != null) onPageChangeListener.onPageScrollStateChanged(state);
         }
     }
 

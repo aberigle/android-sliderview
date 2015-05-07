@@ -1,46 +1,69 @@
 package com.aberigle.android.sliderview.example;
 
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.view.PagerAdapter;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.AbsListView;
+import android.widget.CheckBox;
+import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.aberigle.android.sliderview.SlidingTabLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
+public class ExampleActivity extends AppCompatActivity implements ContentFragment.OnPlayGroundItemClickListener, AbsListView.OnScrollListener {
 
-public class ExampleActivity extends ActionBarActivity {
-
-    private ViewPager viewPager;
-    private SimplePagerAdapter pagerAdapter;
-    private ActionBar bar;
-
+    private ActionBar        bar;
+    private SlidingTabLayout slidingHeader;
+    private boolean          hideBarOnScroll;
+    private int              lastScrollY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_example);
 
         bar = getSupportActionBar();
 
-        bar.setElevation(0);
-
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
-        pagerAdapter = new SimplePagerAdapter();
+        ViewPager          viewPager    = (ViewPager) findViewById(R.id.viewpager);
+        SimplePagerAdapter pagerAdapter = new SimplePagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
 
-        SlidingTabLayout slidingTab = (SlidingTabLayout) findViewById(R.id.slidingtab);
-        slidingTab.setViewpager(viewPager);
-        slidingTab.setElevation(8);
+        slidingHeader = (SlidingTabLayout) findViewById(R.id.slidingtab);
+        slidingHeader.setViewpager(viewPager);
+        slidingHeader.setElevation(16);
+        slidingHeader.attachToActionBar(bar);
+
+        hideBarOnScroll = false;
+
+        slidingHeader.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position != 1) bar.show(); // show the bar when we aren't in the list
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+
+        });
     }
 
     @Override
@@ -59,39 +82,120 @@ public class ExampleActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            bar.hide();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public class SimplePagerAdapter extends PagerAdapter {
+    @Override
+    public void onPlayGroundItemInteract(View playground, View clickedView) {
+        int red     = -1,
+            green   = -1,
+            blue    = -1;
+        switch (clickedView.getId()) {
+            case R.id.customTabView:
+                setCustomTabView();
+                break;
+            case R.id.defaultTabView:
+                setDefaultTabView();
+                break;
+            case R.id.hideBarOnScroll:
+                CheckBox checkBox = (CheckBox) clickedView;
+                hideBarOnScroll = checkBox.isChecked();
+                if (!hideBarOnScroll) bar.show();
+                Toast.makeText(this, "Test this on the \"List\" tab", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.randomColor:
+                Random random = new Random();
+                red     = random.nextInt(200 - 100) + 100;
+                green   = random.nextInt(200 - 100) + 100;
+                blue    = random.nextInt(200 - 100) + 100;
+            case R.id.redBar:
+            case R.id.greenBar:
+            case R.id.blueBar:
+                SeekBar redbar      = (SeekBar) playground.findViewById(R.id.redBar);
+                SeekBar greenbar    = (SeekBar) playground.findViewById(R.id.greenBar);
+                SeekBar bluebar     = (SeekBar) playground.findViewById(R.id.blueBar);
+
+                if (red   == -1) red    = redbar.getProgress();
+                if (green == -1) green  = greenbar.getProgress();
+                if (blue  == -1) blue   = bluebar.getProgress();
+
+                redbar.setProgress(red);
+                greenbar.setProgress(green);
+                bluebar.setProgress(blue);
+                updateHeaderColor(
+                        red,
+                        green,
+                        blue);
+                break;
+            case R.id.stripSizeBar:
+                updateBorderIndicatorThickness(((SeekBar) clickedView).getProgress());
+                break;
+        }
+    }
+
+    private void updateBorderIndicatorThickness(int amount) {
+        slidingHeader.setBorderIndicatorThicknessDPS(amount / 10);
+    }
+
+    private void updateHeaderColor(int red, int green, int blue) {
+        int color = Color.rgb(red, green, blue);
+        slidingHeader.setBackgroundColor(color);
+    }
+
+    private void setDefaultTabView() {
+        slidingHeader.setDefaultTabView();
+        slidingHeader.refreshViews();
+    }
+
+    private void setCustomTabView() {
+        slidingHeader.setCustomTabView(R.layout.custom_tab, R.id.text);
+        slidingHeader.refreshViews();
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {}
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        if (hideBarOnScroll) {
+            View firstChild = view.getChildAt(0);
+            if (firstChild != null) {
+                int scrollY = firstVisibleItem * firstChild.getHeight() - firstChild.getTop() ;
+
+                int diff = Math.abs(lastScrollY - scrollY);
+
+                if (diff > bar.getHeight()) {
+                    if (scrollY > lastScrollY && bar.isShowing()) bar.hide();
+                    else if (scrollY < lastScrollY && !bar.isShowing()) bar.show();
+                    lastScrollY = scrollY;
+                }
+
+            }
+        }
+    }
+
+    public class SimplePagerAdapter extends FragmentPagerAdapter {
 
         public List<String> pages;
 
-        public SimplePagerAdapter() {
+        public SimplePagerAdapter(FragmentManager fm) {
+            super(fm);
             pages = new ArrayList<>();
-            Collections.addAll(pages, "1 2 3 4 5 6 7 8 9 10 11".split(" "));
+            Collections.addAll(pages, "playground list one two three four five six".split(" "));
         }
 
         @Override
-        public Object instantiateItem(ViewGroup container, int position) {
-            View view = getLayoutInflater().inflate(R.layout.example_page, container, false);
-            container.addView(view);
-            TextView text = (TextView) view.findViewById(R.id.text);
-            text.setText("page: " + pages.get(position));
-            return view;
-        }
+        public Fragment getItem(int position) {
+            return ContentFragment.newInstance(position);
 
-        @Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
-            container.removeView((View) object);
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return "PAGE " + pages.get(position);
+            return pages.get(position);
         }
 
         @Override
@@ -99,9 +203,5 @@ public class ExampleActivity extends ActionBarActivity {
             return pages.size();
         }
 
-        @Override
-        public boolean isViewFromObject(View view, Object object) {
-            return object == view;
-        }
     }
 }
