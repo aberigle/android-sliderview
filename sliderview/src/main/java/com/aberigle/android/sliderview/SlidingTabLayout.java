@@ -59,6 +59,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     public void setBorderIndicatorThicknessDPS(int dps) {
         strip.setBorderThicknessDPS(dps);
+        strip.invalidate();
     }
 
     @Override

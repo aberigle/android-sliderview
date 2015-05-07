@@ -95,12 +95,13 @@ public class ContentFragment extends Fragment {
 
         for (int id : ids) playground.findViewById(id).setOnClickListener(clickListener);
 
-        int[] colorIds = {
+        int[] seekBarIds = {
                 R.id.redBar,
                 R.id.blueBar,
-                R.id.greenBar
+                R.id.greenBar,
+                R.id.stripSizeBar
         };
-        for (int id : colorIds)
+        for (int id : seekBarIds)
             ((SeekBar) playground.findViewById(id)).setOnSeekBarChangeListener(seekBarListener);
 
         return playground;

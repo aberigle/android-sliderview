@@ -131,15 +131,19 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
                         green,
                         blue);
                 break;
+            case R.id.stripSizeBar:
+                updateBorderIndicatorThickness(((SeekBar) clickedView).getProgress());
+                break;
         }
+    }
+
+    private void updateBorderIndicatorThickness(int amount) {
+        slidingHeader.setBorderIndicatorThicknessDPS(amount / 10);
     }
 
     private void updateHeaderColor(int red, int green, int blue) {
         int color = Color.rgb(red, green, blue);
         slidingHeader.setBackgroundColor(color);
-//        slidingHeader.setBorderIndicatorThicknessDPS(
-//                getRandom(position + 1, (position + 1) * 3)
-//        );
     }
 
     private void setDefaultTabView() {
