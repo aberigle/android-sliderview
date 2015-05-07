@@ -56,7 +56,7 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
 
             @Override
             public void onPageSelected(int position) {
-
+                if (position != 1) bar.show(); // show the bar when we aren't in the list
             }
 
             @Override
@@ -88,10 +88,6 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
         return super.onOptionsItemSelected(item);
     }
 
-    public SlidingTabLayout getSlidingHeader() {
-        return slidingHeader;
-    }
-
     @Override
     public void onPlayGroundItemInteract(View playground, View clickedView) {
         int red     = -1,
@@ -107,6 +103,7 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
             case R.id.hideBarOnScroll:
                 CheckBox checkBox = (CheckBox) clickedView;
                 hideBarOnScroll = checkBox.isChecked();
+                if (!hideBarOnScroll) bar.show();
                 Toast.makeText(this, "Test this on the \"List\" tab", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.randomColor:
@@ -159,16 +156,14 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
     }
 
     @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
-
-    }
+    public void onScrollStateChanged(AbsListView view, int scrollState) {}
 
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         if (hideBarOnScroll) {
             View firstChild = view.getChildAt(0);
             if (firstChild != null) {
-                int scrollY = -firstChild.getTop() + firstVisibleItem * firstChild.getHeight();
+                int scrollY = firstVisibleItem * firstChild.getHeight() - firstChild.getTop() ;
 
                 int diff = Math.abs(lastScrollY - scrollY);
 
