@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.CheckBox;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.aberigle.android.sliderview.SlidingTabLayout;
 
@@ -106,6 +107,7 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
             case R.id.hideBarOnScroll:
                 CheckBox checkBox = (CheckBox) clickedView;
                 hideBarOnScroll = checkBox.isChecked();
+                Toast.makeText(this, "Test this on the \"List\" tab", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.randomColor:
                 Random random = new Random();
@@ -170,7 +172,7 @@ public class ExampleActivity extends AppCompatActivity implements ContentFragmen
 
                 int diff = Math.abs(lastScrollY - scrollY);
 
-                if (diff > bar.getHeight() / 2) {
+                if (diff > bar.getHeight()) {
                     if (scrollY > lastScrollY && bar.isShowing()) bar.hide();
                     else if (scrollY < lastScrollY && !bar.isShowing()) bar.show();
                     lastScrollY = scrollY;
